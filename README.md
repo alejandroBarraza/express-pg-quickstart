@@ -1,3 +1,9 @@
+# install project dependencies
+
+``` npm install ```
+
+
+
 # Config pg databases
 
 ### 1) Create .env file in your root folder.
