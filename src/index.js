@@ -14,8 +14,9 @@ app.use(express.urlencoded({ extended: true }));
 //User routes
 app.use('/api/user', require('./routes/users'));
 
+
 //Launch Server
-console.log('miStock REST API Backend Service Launching...');
+console.log('REST API Backend Service Launching...');
 console.log('----------------------------------------------');
 
 //Express Startup
