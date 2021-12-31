@@ -13,7 +13,7 @@ const getUsers = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             status: 'error',
-            message: 'Internal server error',
+            message: { error },
         });
         console.log(error);
     }
@@ -52,10 +52,36 @@ const createUser = async (req, res) => {
 };
 
 //update user
-const updateUser = async (req, res) => {};
+const updateUserName = async (req, res) => {
+    const { newUserName, oldUserName } = req.body;
+    try {
+        const { rows } = await query('SELECT username FROM users WHERE username=$1', [oldUserName]);
+
+        if (!rows[0]) {
+            res.status(404).json({
+                status: 'error',
+                message: { error: 'User not found' },
+            });
+        } else {
+            const { rows } = await query(
+                'UPDATE users SET username=$1 WHERE username=$2 returning *',
+                [newUserName, oldUserName]
+            );
+
+            res.status(200).json({
+                status: 'update success',
+                result: rows.length,
+                newValues: rows[0],
+            });
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
 
 module.exports = {
     getUsers,
     getUserById,
     createUser,
+    updateUserName,
 };

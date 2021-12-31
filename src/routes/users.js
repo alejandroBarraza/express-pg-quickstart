@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getUsers, getUserById, createUser } = require('../controllers/users.js');
+const { getUsers, getUserById, createUser, updateUserName } = require('../controllers/users.js');
 
-//initial path routes: '/api/users'
+//initial path routes: '/api/user'
 
 //user get routes
 router.get('/', getUsers);
@@ -14,6 +14,6 @@ router.post('/', createUser);
 //user delete routes
 
 //user update routes
-
+router.put('/updatebyUserName', updateUserName);
 
 module.exports = router;
