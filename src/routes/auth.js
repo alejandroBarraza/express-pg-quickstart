@@ -2,16 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { register, login, forgotPassword, resetPassword } = require('../controllers/auth');
 
-// auth get routes
+// Auth get routes
 
-// auth post routes
+// Auth post routes
 router.post('/register', register);
 router.post('/login', login);
 router.post('/forgotpassword', forgotPassword);
-router.post('/resetpassword', resetPassword);
 
-// auth delete routes
+// Auth delete routes
 
-// auth update routes
+// Auth update routes
+router.put('/resetpassword/:bearerToken', resetPassword);
 
 module.exports = router;
