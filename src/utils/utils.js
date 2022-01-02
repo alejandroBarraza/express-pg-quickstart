@@ -7,4 +7,9 @@ const hashedPassword = async (password) => {
     return hashedPassword;
 };
 
-module.exports = hashedPassword;
+// decrypted password from database.
+const decryptPassword = async (password, encryptedPassword) => {
+    password = await bcrypt.compare(password, encryptedPassword);
+    return password;
+};
+module.exports = { hashedPassword, decryptPassword };

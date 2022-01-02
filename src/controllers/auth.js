@@ -1,6 +1,6 @@
 const { query } = require('../db');
-const hashedPassword = require('../utils/utils');
-const { RegisterValidation } = require('../utils/validations');
+const { hashedPassword, decryptPassword } = require('../utils/utils');
+const { RegisterValidation, loginValidation } = require('../utils/validations');
 //initial path routes: '/api/auth'
 
 //register user controller
@@ -39,7 +39,7 @@ const register = async (req, res, next) => {
             user: rows,
         });
     } catch (error) {
-        res.status(400).json({
+        res.status(500).json({
             status: 'error',
             error,
         });
@@ -48,7 +48,45 @@ const register = async (req, res, next) => {
 
 // login user controller
 const login = async (req, res, next) => {
-    res.send('Login route testing');
+    // validate username and password
+    const { username, password } = req.body;
+    const { error } = loginValidation(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    try {
+        // select username and passwrod from current user.
+        const { rows: user } = await query(
+            'SELECT username,password from users WHERE username=$1',
+            [username]
+        );
+
+        // if user doesnt exist in the database
+        if (!(user && user.length > 0)) {
+            return res.status(400).json({ error: 'User does not exist' });
+        }
+
+        // if user exist check password for this user
+        const match = await decryptPassword(password, user[0].password);
+        if (!match) {
+            return res.status(400).json({
+                status: 'fail',
+                error: 'Invalid Password.',
+            });
+        }
+        // user and password match
+        res.status(200).json({
+            status: 'success',
+            user: user[0],
+        });
+
+        //error
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            status: 'error',
+            err,
+        });
+    }
 };
 
 // forgot password controller
