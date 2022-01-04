@@ -1,6 +1,10 @@
 const { query } = require('../db');
 const { hashedPassword, decryptPassword } = require('../utils/utils');
-const { RegisterValidation, loginValidation } = require('../utils/validations');
+const {
+    RegisterValidation,
+    loginValidation,
+    forgotPasswordValidation,
+} = require('../utils/validations');
 //initial path routes: '/api/auth'
 
 //register user controller
@@ -17,17 +21,17 @@ const register = async (req, res, next) => {
     const { rows: userExist } = await query('SELECT username FROM users WHERE username = $1', [
         username,
     ]);
-
     if (userExist && userExist.length > 0) {
         return res.status(400).json({ error: 'User already exist' });
     }
 
-    // check if mail already exists
+    // check if mail already exists in the database
     const { rows: mailExist } = await query('SELECT email FROM users WHERE email = $1', [email]);
     if (mailExist && mailExist.length > 0) {
         return res.status(400).json({ error: 'Mail already exist' });
     }
 
+    // insert new user in db
     try {
         const { rows } = await query(
             `INSERT INTO users (username,email,password) VALUES ($1,$2,$3) RETURNING *`,
@@ -48,7 +52,7 @@ const register = async (req, res, next) => {
 
 // login user controller
 const login = async (req, res, next) => {
-    // validate username and password
+    // validate username and password from body
     const { username, password } = req.body;
     const { error } = loginValidation(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
@@ -74,6 +78,7 @@ const login = async (req, res, next) => {
             });
         }
         // user and password match
+        //TODO: Remove res status and create jwt for current user session
         res.status(200).json({
             status: 'success',
             user: user[0],
@@ -91,7 +96,24 @@ const login = async (req, res, next) => {
 
 // forgot password controller
 const forgotPassword = async (req, res, next) => {
-    res.send('Forgot password route testing');
+    // get the email and password from body
+    const { username, email } = req.body;
+    const { error } = forgotPasswordValidation(req.body);
+    if (error) return res.status(400).json({ status: 'fail', error: error.details[0].message });
+
+    // find email in databse if exist.
+    const { rows: userForgotPassword } = await query('SELECT email,password from users WHERE=$1', [
+        username,
+    ]);
+    if (!(userForgotPassword && userForgotPassword.length > 0)) {
+        return res.status(400).json({
+            status: 'fail',
+            error: 'user does not exist in the database',
+        });
+    }
+
+    // TODO
+    // if user exist, send mail with url /api/auth/forgotPassword/+jwt
 };
 
 // reset password controller

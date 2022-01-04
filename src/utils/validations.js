@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-// register validation schema
+// Register validation schema
 const RegisterValidation = (data) => {
     const schema = Joi.object({
         username: Joi.string().alphanum().min(3).max(20).required(),
@@ -13,6 +13,7 @@ const RegisterValidation = (data) => {
     return schema.validate(data);
 };
 
+// Login validation schema
 const loginValidation = (data) => {
     const schema = Joi.object({
         username: Joi.string().alphanum().min(3).max(20).required(),
@@ -21,4 +22,17 @@ const loginValidation = (data) => {
 
     return schema.validate(data);
 };
-module.exports = { RegisterValidation, loginValidation };
+
+// forgotPassword validarion schema
+const forgotPasswordValidation = (data) => {
+    const schema = Joi.object({
+        username: Joi.string().alphanum().min(3).max(20).required(),
+        email: Joi.string()
+            .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
+            .required(),
+    });
+
+    return schema.validate(data);
+};
+
+module.exports = { RegisterValidation, loginValidation, forgotPasswordValidation };
