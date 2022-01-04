@@ -1,5 +1,4 @@
 // Error Response custom message
-
 class ErrorResponse extends Error {
     constructor(message, statusCode) {
         super(message);
