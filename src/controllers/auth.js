@@ -1,4 +1,5 @@
 const { query } = require('../db');
+const ErrorResponse = require('../utils/errorResponse');
 const { hashedPassword, decryptPassword } = require('../utils/utils');
 const {
     RegisterValidation,

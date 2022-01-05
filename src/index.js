@@ -2,6 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const errorHandler = require('./middlewares/error');
 
 // Express init
 const app = express();
@@ -15,6 +16,9 @@ app.use(express.urlencoded({ extended: true }));
 //User routes middleware
 app.use('/api/user', require('./routes/users'));
 app.use('/api/auth', require('./routes/auth'));
+
+//Error handler middleware
+app.use(errorHandler);
 
 //Launch Server
 console.log('REST API Backend Service Launching...');
