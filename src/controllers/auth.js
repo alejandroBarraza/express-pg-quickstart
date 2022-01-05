@@ -1,6 +1,6 @@
 const { query } = require('../db');
 const ErrorResponse = require('../utils/errorResponse');
-const { hashedPassword, decryptPassword } = require('../utils/utils');
+const { hashedPassword, decryptPassword, getSignedTocken } = require('../Model/User');
 const {
     RegisterValidation,
     loginValidation,
@@ -8,18 +8,20 @@ const {
 } = require('../utils/validations');
 //initial path routes: '/api/auth'
 
+// TODO: Replace error to ErrorHandler middleware.
+
 //register user controller
 const register = async (req, res, next) => {
+    // validate user data from body
+    const { error } = RegisterValidation(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
     // hashing password
     const { username, email, password } = req.body;
     const passwordHashed = await hashedPassword(password);
 
-    // validating user data
-    const { error } = RegisterValidation(req.body);
-    if (error) return res.status(400).json({ error: error.details[0].message });
-
     //  check if user already exists
-    const { rows: userExist } = await query('SELECT username FROM users WHERE username = $1', [
+    const { rows: userExist } = await query('SELECT id,username FROM users WHERE username = $1', [
         username,
     ]);
     if (userExist && userExist.length > 0) {
@@ -34,15 +36,15 @@ const register = async (req, res, next) => {
 
     // insert new user in db
     try {
-        const { rows } = await query(
+        const { rows: user } = await query(
             `INSERT INTO users (username,email,password) VALUES ($1,$2,$3) RETURNING *`,
             [username, email, passwordHashed]
         );
-        res.status(200).json({
-            status: 'success',
-            results: rows.length,
-            user: rows,
-        });
+
+        //send token to register user
+        sendToken(user, 201, res);
+
+        // error
     } catch (error) {
         res.status(500).json({
             status: 'error',
@@ -61,7 +63,7 @@ const login = async (req, res, next) => {
     try {
         // select username and passwrod from current user.
         const { rows: user } = await query(
-            'SELECT username,password from users WHERE username=$1',
+            'SELECT id,username,password from users WHERE username=$1',
             [username]
         );
 
@@ -78,12 +80,9 @@ const login = async (req, res, next) => {
                 error: 'Invalid Password.',
             });
         }
-        // user and password match
-        //TODO: Remove res status and create jwt for current user session
-        res.status(200).json({
-            status: 'success',
-            user: user[0],
-        });
+
+        //send jwt token session to current loged in user
+        sendToken(user, 200, res);
 
         //error
     } catch (err) {
@@ -113,8 +112,7 @@ const forgotPassword = async (req, res, next) => {
         });
     }
 
-    // TODO
-    // if user exist, send mail with url /api/auth/forgotPassword/+jwt
+    // TODO: if user exist, send mail with url /api/auth/forgotPassword/+jwt
 };
 
 // reset password controller
@@ -122,9 +120,23 @@ const resetPassword = async (req, res, next) => {
     res.send('forgor password route testing');
 };
 
+// send tocken controller
+const sendToken = (user, statusCode, res) => {
+    const [currUser] = user;
+    try {
+        const token = getSignedTocken(currUser.username, currUser.id);
+        res.status(statusCode).json({
+            success: true,
+            jwt: token,
+        });
+    } catch (error) {
+        console.log(error);
+    }
+};
 module.exports = {
     register,
     login,
     forgotPassword,
     resetPassword,
+    sendToken,
 };
