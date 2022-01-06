@@ -14,8 +14,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 //User routes middleware
-app.use('/api/user', require('./routes/users'));
+// app.use('/api/user', require('./routes/users'));
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/privated', require('./routes/privateRoutes'));
 
 //Error handler middleware
 app.use(errorHandler);
