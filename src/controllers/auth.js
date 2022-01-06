@@ -1,6 +1,11 @@
 const { query } = require('../db');
-const ErrorResponse = require('../utils/errorResponse');
-const { hashedPassword, decryptPassword, getSignedTocken } = require('../Model/User');
+// const ErrorResponse = require('../utils/errorResponse');
+const {
+    hashedPassword,
+    decryptPassword,
+    getSignedToken,
+    getRefreshToken,
+} = require('../Model/User');
 const {
     RegisterValidation,
     loginValidation,
@@ -117,17 +122,20 @@ const forgotPassword = async (req, res, next) => {
 
 // reset password controller
 const resetPassword = async (req, res, next) => {
-    res.send('forgor password route testing');
+    res.send('forgot password route testing');
 };
 
 // send tocken controller
 const sendToken = (user, statusCode, res) => {
     const [currUser] = user;
+    delete currUser['password'];
     try {
-        const token = getSignedTocken(currUser.username, currUser.id);
+        const token = getSignedToken(currUser);
+        const refreshToken = getRefreshToken(currUser);
         res.status(statusCode).json({
             success: true,
-            jwt: token,
+            token,
+            refreshToken,
         });
     } catch (error) {
         console.log(error);

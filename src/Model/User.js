@@ -17,15 +17,15 @@ const decryptPassword = async (password, encryptedPassword) => {
 };
 
 // Get username and id from current user, sigin it and return a token
-const getSignedTocken = (username, id) => {
-    return jwt.sign(
-        {
-            id,
-            username,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE }
-    );
+const getSignedToken = (user) => {
+    console.log(user);
+    return jwt.sign({ user }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
 };
 
-module.exports = { hashedPassword, decryptPassword, getSignedTocken };
+// Get refresh token for current user.
+
+const getRefreshToken = (user) => {
+    return jwt.sign({ user }, process.env.JWT_REFRESH);
+};
+
+module.exports = { hashedPassword, decryptPassword, getSignedToken, getRefreshToken };
