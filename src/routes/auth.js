@@ -7,11 +7,11 @@ const { register, login, forgotPassword, resetPassword } = require('../controlle
 // Auth post routes
 router.post('/register', register);
 router.post('/login', login);
-router.post('/forgotpassword', forgotPassword);
+router.post('/forgot-password', forgotPassword);
 
 // Auth delete routes
 
 // Auth update routes
-router.put('/resetpassword/:bearerToken', resetPassword);
+router.put('/reset-password/:bearerToken', resetPassword);
 
 module.exports = router;
