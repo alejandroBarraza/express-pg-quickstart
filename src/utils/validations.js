@@ -26,7 +26,6 @@ const loginValidation = (data) => {
 // forgotPassword validarion schema
 const forgotPasswordValidation = (data) => {
     const schema = Joi.object({
-        username: Joi.string().alphanum().min(3).max(20).required(),
         email: Joi.string()
             .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
             .required(),
