@@ -121,9 +121,8 @@ const forgotPassword = async (req, res, next) => {
 
         // Get resetPassword Token and Expire time token.
         const [resetPasswordToken, resetPasswordExpire] = getResetPasswordToken();
-        console.log(resetPasswordToken, resetPasswordExpire);
-        const { rows } = await query(
-            'UPDATE users SET "resetPasswordToken" = $1 WHERE email = $2 returning *',
+        await query(
+            `UPDATE users SET "resetPasswordToken" = $1, resetpasswordexpire = to_timestamp(${resetPasswordExpire}/1000)  WHERE email = $2 returning *`,
             [resetPasswordToken, user[0].email]
         );
 
@@ -151,14 +150,12 @@ const forgotPassword = async (req, res, next) => {
             });
         } catch (error) {
             // Reset token and expire time for current user.
+            await query(
+                `UPDATE users SET "resetPasswordToken" = $1, resetpasswordexpire = to_timestamp(${resetPasswordExpire}/1000)  WHERE email = $2 returning *`,
+                [resetPasswordToken, user[0].email]
+            );
 
-            await query('UPDATE users SET "resetPasswordToken" = $1 WHERE email =$2 returning *', [
-                null,
-                user[0].email,
-            ]);
             console.log(error);
-            // `insert into times (time) values (to_timestamp(${Date.now()} / 1000.0))`
-
             res.status(400).json({
                 success: false,
                 error,

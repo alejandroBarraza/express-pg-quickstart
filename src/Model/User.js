@@ -33,8 +33,8 @@ const getResetPasswordToken = () => {
     const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     // current time + 10 min
+    // const resetPasswordExpire = new Date(Date.now() + 10 * (60 * 1000).toISOString());
     const resetPasswordExpire = Date.now() + 10 * (60 * 1000);
-    // const resetPasswordExpire = Date.now();
     return [resetPasswordToken, resetPasswordExpire];
 };
 
