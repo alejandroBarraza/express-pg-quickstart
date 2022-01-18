@@ -1,5 +1,6 @@
 const { query } = require('../db');
 require('dotenv').config();
+const crypto = require('crypto');
 // const ErrorResponse = require('../utils/errorResponse');
 const {
     hashedPassword,
@@ -120,14 +121,14 @@ const forgotPassword = async (req, res, next) => {
         }
 
         // Get resetPassword Token and Expire time token.
-        const [resetPasswordToken, resetPasswordExpire] = getResetPasswordToken();
+        const [resetToken, resetPasswordToken, resetPasswordExpire] = getResetPasswordToken();
         await query(
-            `UPDATE users SET "resetPasswordToken" = $1, resetpasswordexpire = to_timestamp(${resetPasswordExpire}/1000)  WHERE email = $2 returning *`,
+            `UPDATE users SET resetpasswordtoken = $1, resetpasswordexpire = to_timestamp(${resetPasswordExpire}/1000)  WHERE email = $2 returning *`,
             [resetPasswordToken, user[0].email]
         );
 
         // Send email with url to nodemailer and sendgrid.
-        const urlResetPassword = `${process.env.PUBLIC_URL}/password-resset/${resetPasswordToken}`;
+        const urlResetPassword = `${process.env.PUBLIC_URL}/password-resset/${resetToken}`;
 
         const message = `
         <h1>you have requestes a new password resset</h1>
@@ -151,7 +152,7 @@ const forgotPassword = async (req, res, next) => {
         } catch (error) {
             // Reset token and expire time for current user.
             await query(
-                `UPDATE users SET "resetPasswordToken" = $1, resetpasswordexpire = to_timestamp(${resetPasswordExpire}/1000)  WHERE email = $2 returning *`,
+                `UPDATE users SET resetpasswordtoken = $1, resetpasswordexpire = to_timestamp(${resetPasswordExpire}/1000)  WHERE email = $2 returning *`,
                 [resetPasswordToken, user[0].email]
             );
 
@@ -174,7 +175,45 @@ const forgotPassword = async (req, res, next) => {
 
 // Reset password controller.
 const resetPassword = async (req, res, next) => {
-    res.send('forgot password route testing');
+    const { password } = req.body;
+    const resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(req.params.resetToken)
+        .digest('hex');
+
+    // Check if resetPasswordToken from url is same as in the db.
+    try {
+        const { rows: userReset } = await query(
+            `SELECT * from users WHERE resetpasswordtoken =$1`,
+            [resetPasswordToken]
+        );
+
+        // Check if query return any user with this token.
+        if (!(userReset && userReset.length > 0)) {
+            return res.status(400).json({
+                status: 'fail',
+                error: 'Does not exist user with given token. ',
+            });
+        }
+
+        // If user exist, update his/her password,token and expire date.
+        const { rows: user } = await query(
+            `UPDATE users SET password = $1, resetpasswordtoken = $2, resetpasswordexpire = $3  WHERE resetpasswordtoken = $4 AND resetpasswordexpire > now() returning *`,
+            [password, null, null, resetPasswordToken]
+        );
+
+        res.status(201).json({
+            success: true,
+            message: 'user password updated',
+            user,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(400).json({
+            success: false,
+            error,
+        });
+    }
 };
 
 // Send tocken controller.
