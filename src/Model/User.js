@@ -35,7 +35,7 @@ const getResetPasswordToken = () => {
     // current time + 10 min
     // const resetPasswordExpire = new Date(Date.now() + 10 * (60 * 1000).toISOString());
     const resetPasswordExpire = Date.now() + 10 * (60 * 1000);
-    return [resetPasswordToken, resetPasswordExpire];
+    return [resetToken, resetPasswordToken, resetPasswordExpire];
 };
 
 module.exports = {
