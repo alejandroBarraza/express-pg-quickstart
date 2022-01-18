@@ -12,6 +12,6 @@ router.post('/forgot-password', forgotPassword);
 // Auth delete routes
 
 // Auth update routes
-router.put('/reset-password/:bearerToken', resetPassword);
+router.put('/reset-password/:resetToken', resetPassword);
 
 module.exports = router;
