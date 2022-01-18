@@ -2,6 +2,7 @@
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 // Return password salt hashed from current user
 const hashedPassword = async (password) => {
@@ -18,14 +19,29 @@ const decryptPassword = async (password, encryptedPassword) => {
 
 // Get username and id from current user, sigin it and return a token
 const getSignedToken = (user) => {
-    console.log(user);
     return jwt.sign({ user }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
 };
 
 // Get refresh token for current user.
-
 const getRefreshToken = (user) => {
     return jwt.sign({ user }, process.env.JWT_REFRESH);
 };
 
-module.exports = { hashedPassword, decryptPassword, getSignedToken, getRefreshToken };
+// Get ResetPassword token for current user
+const getResetPasswordToken = () => {
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    // current time + 10 min
+    const resetPasswordExpire = Date.now() + 10 * (60 * 1000);
+    // const resetPasswordExpire = Date.now();
+    return [resetPasswordToken, resetPasswordExpire];
+};
+
+module.exports = {
+    hashedPassword,
+    decryptPassword,
+    getSignedToken,
+    getRefreshToken,
+    getResetPasswordToken,
+};

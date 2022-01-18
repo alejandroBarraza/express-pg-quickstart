@@ -1,11 +1,14 @@
 const { query } = require('../db');
+require('dotenv').config();
 // const ErrorResponse = require('../utils/errorResponse');
 const {
     hashedPassword,
     decryptPassword,
     getSignedToken,
     getRefreshToken,
+    getResetPasswordToken,
 } = require('../Model/User');
+const sendMail = require('../utils/sendEmail');
 const {
     RegisterValidation,
     loginValidation,
@@ -66,18 +69,18 @@ const login = async (req, res, next) => {
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     try {
-        // select username and passwrod from current user.
+        // Select username and password from current user.
         const { rows: user } = await query(
             'SELECT id,username,password from users WHERE username=$1',
             [username]
         );
 
-        // if user doesnt exist in the database
+        // If user doesnt exist in the database.
         if (!(user && user.length > 0)) {
             return res.status(400).json({ error: 'User does not exist' });
         }
 
-        // if user exist check password for this user
+        // If user exist check password for this user
         const match = await decryptPassword(password, user[0].password);
         if (!match) {
             return res.status(400).json({
@@ -86,10 +89,10 @@ const login = async (req, res, next) => {
             });
         }
 
-        //send jwt token session to current loged in user
+        //Send jwt token session to current loged in user.
         sendToken(user, 200, res);
 
-        //error
+        //Error
     } catch (err) {
         console.log(err);
         res.status(500).json({
@@ -99,33 +102,85 @@ const login = async (req, res, next) => {
     }
 };
 
-// forgot password controller
+// Forgot password controller.
 const forgotPassword = async (req, res, next) => {
     // get the email and password from body
-    const { username, email } = req.body;
+    const { email } = req.body;
     const { error } = forgotPasswordValidation(req.body);
-    if (error) return res.status(400).json({ status: 'fail', error: error.details[0].message });
+    if (error) return res.status(400).json({ status: false, error: error.details[0].message });
 
-    // find email in databse if exist.
-    const { rows: userForgotPassword } = await query('SELECT email,password from users WHERE=$1', [
-        username,
-    ]);
-    if (!(userForgotPassword && userForgotPassword.length > 0)) {
+    try {
+        // Find email in databse if exist.
+        const { rows: user } = await query('SELECT email FROM users WHERE email = $1', [email]);
+        if (!(user && user.length > 0)) {
+            return res.status(400).json({
+                status: 'fail',
+                error: 'Mail does not exist for the user',
+            });
+        }
+
+        // Get resetPassword Token and Expire time token.
+        const [resetPasswordToken, resetPasswordExpire] = getResetPasswordToken();
+        console.log(resetPasswordToken, resetPasswordExpire);
+        const { rows } = await query(
+            'UPDATE users SET "resetPasswordToken" = $1 WHERE email = $2 returning *',
+            [resetPasswordToken, user[0].email]
+        );
+
+        // Send email with url to nodemailer and sendgrid.
+        const urlResetPassword = `${process.env.PUBLIC_URL}/password-resset/${resetPasswordToken}`;
+
+        const message = `
+        <h1>you have requestes a new password resset</h1>
+        <p>plase go to this link to reset your password</p>
+        <a href='${urlResetPassword}  clicktracking='off'> ${urlResetPassword} </a>
+        
+        `;
+
+        // Send to nodemailes with the message.
+        try {
+            await sendMail({
+                to: user[0].email,
+                subject: 'Reset password',
+                html: message,
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Message has been sent 📩',
+            });
+        } catch (error) {
+            // Reset token and expire time for current user.
+
+            await query('UPDATE users SET "resetPasswordToken" = $1 WHERE email =$2 returning *', [
+                null,
+                user[0].email,
+            ]);
+            console.log(error);
+            // `insert into times (time) values (to_timestamp(${Date.now()} / 1000.0))`
+
+            res.status(400).json({
+                success: false,
+                error,
+            });
+        }
+
+        // Error.
+    } catch (error) {
+        console.log(error);
         return res.status(400).json({
-            status: 'fail',
-            error: 'user does not exist in the database',
+            success: false,
+            error,
         });
     }
-
-    // TODO: if user exist, send mail with url /api/auth/forgotPassword/+jwt
 };
 
-// reset password controller
+// Reset password controller.
 const resetPassword = async (req, res, next) => {
     res.send('forgot password route testing');
 };
 
-// send tocken controller
+// Send tocken controller.
 const sendToken = (user, statusCode, res) => {
     const [currUser] = user;
     delete currUser['password'];
