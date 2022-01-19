@@ -1,7 +1,6 @@
 const { query } = require('../db');
 require('dotenv').config();
 const crypto = require('crypto');
-// const ErrorResponse = require('../utils/errorResponse');
 const {
     hashedPassword,
     decryptPassword,
@@ -15,21 +14,22 @@ const {
     loginValidation,
     forgotPasswordValidation,
 } = require('../utils/validations');
-//initial path routes: '/api/auth'
 
 // TODO: Replace error to ErrorHandler middleware.
+// const ErrorResponse = require('../utils/errorResponse');
+//initial path routes: '/api/auth'
 
-//register user controller
+//Register user controller
 const register = async (req, res, next) => {
-    // validate user data from body
+    // Validate user data from body.
     const { error } = RegisterValidation(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    // hashing password
+    // Hashing password
     const { username, email, password } = req.body;
     const passwordHashed = await hashedPassword(password);
 
-    //  check if user already exists
+    //  Check if user already exists.
     const { rows: userExist } = await query('SELECT id,username FROM users WHERE username = $1', [
         username,
     ]);
@@ -37,23 +37,23 @@ const register = async (req, res, next) => {
         return res.status(400).json({ error: 'User already exist' });
     }
 
-    // check if mail already exists in the database
+    // Check if mail already exists in the database.
     const { rows: mailExist } = await query('SELECT email FROM users WHERE email = $1', [email]);
     if (mailExist && mailExist.length > 0) {
         return res.status(400).json({ error: 'Mail already exist' });
     }
 
-    // insert new user in db
+    // Insert new user in db.
     try {
         const { rows: user } = await query(
             `INSERT INTO users (username,email,password) VALUES ($1,$2,$3) RETURNING *`,
             [username, email, passwordHashed]
         );
 
-        //send token to register user
+        //Send token to register user.
         sendToken(user, 201, res);
 
-        // error
+        // Error
     } catch (error) {
         res.status(500).json({
             status: 'error',
@@ -62,9 +62,9 @@ const register = async (req, res, next) => {
     }
 };
 
-// login user controller
+// Login user controller.
 const login = async (req, res, next) => {
-    // validate username and password from body
+    // validate username and password from body.
     const { username, password } = req.body;
     const { error } = loginValidation(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
