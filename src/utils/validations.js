@@ -1,12 +1,12 @@
 const Joi = require('joi')
 
 // Register validation schema
+
+// const pattern = `'^[a-zA-Z0-9]{6,30}$'`
 const RegisterValidation = (data) => {
     const schema = Joi.object({
         username: Joi.string().alphanum().min(3).max(20).required(),
-        password: Joi.string()
-            // .pattern(new RegExp('^(?=.*[A-Za-z])(?=.*d)[A-Za-zd]{6,}$'))
-            .required(),
+        password: Joi.string().alphanum().required(),
         email: Joi.string()
             .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
             .required(),
@@ -19,9 +19,7 @@ const RegisterValidation = (data) => {
 const loginValidation = (data) => {
     const schema = Joi.object({
         username: Joi.string().alphanum().min(3).max(20).required(),
-        password: Joi.string()
-            // .pattern(new RegExp('^(?=.*[A-Za-z])(?=.*d)[A-Za-zd]{6,}$'))
-            .required(),
+        password: Joi.string().alphanum().required(),
     })
 
     return schema.validate(data)
