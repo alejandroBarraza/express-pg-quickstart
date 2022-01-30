@@ -129,12 +129,12 @@ const forgotPassword = async (req, res, next) => {
         )
 
         // Send email with url to nodemailer and sendgrid.
-        const urlResetPassword = `${process.env.PUBLIC_URL}/password-resset/${resetToken}`
+        const urlResetPassword = `${process.env.PUBLIC_URL}/reset-password/${resetToken}`
 
         const message = `
         <h1>you have requestes a new password resset</h1>
         <p>plase go to this link to reset your password</p>
-        <a href='${urlResetPassword}  clicktracking='off'> ${urlResetPassword} </a>
+        <a href=${urlResetPassword} clicktracking=off > ${urlResetPassword} </a>
         
         `
 
@@ -198,9 +198,11 @@ const resetPassword = async (req, res, next) => {
         }
 
         // If user exist, update his/her password,token and expire date.
+        // hash password.
+        const passwordHashed = await hashedPassword(password)
         const { rows: user } = await query(
             `UPDATE users SET password = $1, resetpasswordtoken = $2, resetpasswordexpire = $3  WHERE resetpasswordtoken = $4 AND resetpasswordexpire > now() returning *`,
-            [password, null, null, resetPasswordToken]
+            [passwordHashed, null, null, resetPasswordToken]
         )
 
         res.status(201).json({
