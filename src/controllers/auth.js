@@ -34,13 +34,15 @@ const register = async (req, res, next) => {
         username,
     ])
     if (userExist && userExist.length > 0) {
-        return res.status(400).json({ success: false, error: 'User already exist' })
+        return res.status(400).json({ success: false, error: `User ${username} already exist` })
     }
 
     // Check if mail already exists in the database.
     const { rows: mailExist } = await query('SELECT email FROM users WHERE email = $1', [email])
     if (mailExist && mailExist.length > 0) {
-        return res.status(400).json({ success: false, error: 'Mail already exist' })
+        return res
+            .status(400)
+            .json({ success: false, error: `An account with email ${email} already exist` })
     }
 
     // Insert new user in db.
