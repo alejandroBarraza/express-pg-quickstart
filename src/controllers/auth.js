@@ -1,6 +1,7 @@
 const { query } = require('../db')
 require('dotenv').config()
 const crypto = require('crypto')
+const { OAuth2Client } = require('google-auth-library')
 const {
     hashedPassword,
     decryptPassword,
@@ -221,6 +222,60 @@ const resetPassword = async (req, res, next) => {
     }
 }
 
+const loginGoogle = async (req, res, next) => {
+    const client = new OAuth2Client(process.env.CLIENT_ID)
+    const { tokenId: token } = req.body
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.CLIENT_ID,
+        })
+        const { name: username, email, sub } = ticket.getPayload()
+
+        // check in db if user exist
+        const { rows: user } = await query(`SELECT email,googleId FROM users WHERE email = $1`, [
+            email,
+        ])
+
+        // if user email exist and has no google id , return already exist
+        if (user[0]?.email && user[0]?.googleid === null) {
+            return res.status(400).json({
+                success: false,
+                error: `An account with email ${email} already exist`,
+            })
+        } else if (user[0]?.email && user[0]?.googleid) {
+            // if user email exist and has google id, return values
+            res.status(200).json({
+                success: true,
+                dataUser: {
+                    username,
+                    email,
+                },
+            })
+        } else {
+            // if user email does not exist, create the user
+            const password = crypto.randomBytes(6).toString('hex')
+            const passwordHashed = await hashedPassword(password)
+            await query(
+                `INSERT INTO users (username,email,password,googleid) VALUES ($1,$2,$3,$4) RETURNING *`,
+                [username, email, passwordHashed, sub]
+            )
+            res.status(201).json({
+                dataUser: {
+                    username,
+                    email,
+                },
+            })
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(400).json({
+            success: false,
+            error,
+        })
+    }
+}
+
 // Send tocken controller.
 const sendToken = (user, statusCode, res) => {
     const [currUser] = user
@@ -245,6 +300,7 @@ const sendToken = (user, statusCode, res) => {
 module.exports = {
     register,
     login,
+    loginGoogle,
     forgotPassword,
     resetPassword,
     sendToken,
