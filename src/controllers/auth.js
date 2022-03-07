@@ -250,6 +250,7 @@ const loginGoogle = async (req, res, next) => {
                 dataUser: {
                     username,
                     email,
+                    token,
                 },
             })
         } else {
