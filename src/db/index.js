@@ -9,7 +9,7 @@ const devConfig = {
     port: process.env.PGPORT,
 }
 
-const pool = new Pool(process.env.NODE_ENV === 'production' ? prodConfig : devConfig)
+const pool = new Pool(prodConfig)
 
 module.exports = {
     query: (text, params) => pool.query(text, params),
