@@ -6,7 +6,7 @@ const errorHandler = require('./middlewares/error')
 
 // Express init
 const app = express()
-const PORT = process.env.PORT || 4000
+// const PORT = process.env.PORT || 4000
 
 // Middlewares
 app.use(cors())
@@ -26,6 +26,10 @@ console.log('REST API Backend Service Launching...')
 console.log('----------------------------------------------')
 
 //Express Startup
-app.listen(PORT, () => {
-    console.log(`[OK] Express listening on port ${PORT}`)
+app.listen(process.env.PORT || 4000, function () {
+    console.log(
+        'Express server listening on port %d in %s mode',
+        this.address().port,
+        app.settings.env
+    )
 })
