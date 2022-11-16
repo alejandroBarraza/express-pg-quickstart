@@ -1,19 +1,19 @@
-const express = require('express');
-const router = express.Router();
-const { getUsers, getUserById, createUser, updateUserName } = require('../controllers/users.js');
+const express = require('express')
+const router = express.Router()
+const { getUsers, getUserById, createUser, updateUserName } = require('../controllers/users.js')
 
 //initial path routes: '/api/user'
 
 //user get routes
-router.get('/', getUsers);
-router.get('/:id', getUserById);
+router.get('/getUsers', getUsers)
+router.get('/:id', getUserById)
 
 //user post routes
-router.post('/', createUser);
+router.post('/', createUser)
 
 //user delete routes
 
 //user update routes
-router.put('/updatebyUserName', updateUserName);
+router.put('/updatebyUserName', updateUserName)
 
-module.exports = router;
+module.exports = router
